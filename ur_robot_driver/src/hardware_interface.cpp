@@ -87,14 +87,13 @@ bool HardwareInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw
   joint_efforts_ = { { 0, 0, 0, 0, 0, 0 } };
   std::string script_filename;
   std::string wrench_frame_id;
-  std::string speed_scaling_id;
   std::string output_recipe_filename;
   std::string input_recipe_filename;
 
   // The robot's IP address.
   if (!robot_hw_nh.getParam("robot_ip", robot_ip_))
   {
-    ROS_ERROR_STREAM("Required parameter " << robot_hw_nh.resolveName("robot_ip") << " not given.");
+    ROS_ERROR_STREAM("Required parameter " << robot_hw_nh.resolveName("robot_ip_") << " not given.");
     return false;
   }
 
@@ -116,9 +115,6 @@ bool HardwareInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw
 
   // Optional parameter to change the id of the wrench frame
   robot_hw_nh.param<std::string>("wrench_frame_id", wrench_frame_id, "wrench");
-
-  // Optional parameter to change the id of the speed scaling topic
-  robot_hw_nh.param<std::string>("speed_scaling_id", speed_scaling_id, "speed_scaling_factor");
 
   // Path to the urscript code that will be sent to the robot.
   if (!robot_hw_nh.getParam("script_file", script_filename))
@@ -352,7 +348,8 @@ bool HardwareInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw
         js_interface_.getHandle(joint_names_[i]), &joint_velocity_command_[i], &speed_scaling_combined_));
   }
 
-  speedsc_interface_.registerHandle(scaled_controllers::SpeedScalingHandle(speed_scaling_id, &speed_scaling_combined_));
+  speedsc_interface_.registerHandle(
+      scaled_controllers::SpeedScalingHandle("speed_scaling_factor", &speed_scaling_combined_));
 
   fts_interface_.registerHandle(hardware_interface::ForceTorqueSensorHandle(
       wrench_frame_id, tf_prefix_ + "tool0_controller", fts_measurements_.begin(), fts_measurements_.begin() + 3));
